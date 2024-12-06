@@ -12,7 +12,7 @@ const returnedTargetFile = (originalTargetFile) => {
   const basename = path.basename(originalTargetFile);
 
   switch (basename) {
-    case FILENAMES.poetry.lockfile: {
+    case FILENAMES.poetry.lockfile, FILENAMES.uv.lockfile: {
       const dirname = path.dirname(originalTargetFile);
       const pyprojectRelativePath = path.join(
         dirname,

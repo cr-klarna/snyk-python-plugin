@@ -1,0 +1,9 @@
+[project]
+name = "extras-uv"
+version = "0.1.0"
+description = ""
+authors = ["Clifford Richardson <clifford.richardson@klarna.com>"]
+readme = "README.md"
+dependencies=[
+    "opentelemetry-distro[otlp]==0.35b0"
+]

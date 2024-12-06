@@ -4,6 +4,7 @@ import * as subProcess from './sub-process';
 import { legacyPlugin as api } from '@snyk/cli-interface';
 import { getMetaData, inspectInstalledDeps } from './inspect-implementation';
 import { getPoetryDependencies } from './poetry';
+import { getUVDependencies } from './uv';
 import { FILENAMES } from '../types';
 
 export interface PythonInspectOptions {
@@ -32,6 +33,11 @@ export async function getDependencies(
   // handle poetry projects by parsing manifest & lockfile and return a dep-graph
   if (path.basename(targetFile) === FILENAMES.poetry.lockfile) {
     return getPoetryDependencies(command, root, targetFile, includeDevDeps);
+  }
+
+  // handle uv projects by parsing manifest & lockfile and return a dep-graph
+  if (path.basename(targetFile) === FILENAMES.uv.lockfile) {
+    return getUVDependencies(command, root, targetFile, includeDevDeps);
   }
 
   let baseargs: string[] = [];

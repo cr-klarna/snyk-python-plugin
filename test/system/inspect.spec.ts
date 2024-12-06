@@ -640,6 +640,69 @@ describe('inspect', () => {
     expect(result.plugin.targetFile).toEqual(expectedTargetFile);
   });
 
+  describe.only('uv projects', () => {
+    it('should return expected dependencies for uv-app', async () => {
+      const workspace = 'uv-app';
+      testUtils.chdirWorkspaces(workspace);
+
+      const result = await inspect('.', FILENAMES.uv.lockfile);
+      expect(result).toMatchObject({
+        plugin: {
+          name: 'snyk-python-plugin',
+          runtime: expect.any(String), // any version of Python
+          targetFile: FILENAMES.uv.manifest,
+        },
+        package: null, // no dep-tree
+        dependencyGraph: {}, // match any dep-graph (equality checked below)
+      });
+
+      const builder = new DepGraphBuilder(
+        { name: 'uv' },
+        { name: 'uv-fixtures-project', version: '0.1.0' }
+      );
+      const expected = builder
+        .addPkgNode({ name: 'jinja2', version: '2.11.3' }, 'jinja2', {
+          labels: { scope: 'prod' },
+        })
+        .connectDep(builder.rootNodeId, 'jinja2')
+        .addPkgNode({ name: 'markupsafe', version: '3.0.2' }, 'markupsafe', {
+          labels: { scope: 'prod' },
+        })
+        .connectDep('jinja2', 'markupsafe')
+        .build();
+
+      expect(result.dependencyGraph.equals(expected)).toBeTruthy();
+    });
+
+    it('should return expected dependencies for uv-optional-dependencies', async () => {
+      const workspace = 'uv-app-optional-dependencies';
+      testUtils.chdirWorkspaces(workspace);
+
+      const result = await inspect('.', FILENAMES.uv.lockfile);
+
+      const expected = [
+        {
+          pkg: {
+            name: 'opentelemetry-distro',
+            version: '0.35b0',
+          },
+          directDeps: ['opentelemetry-distro'],
+        },
+      ];
+
+      compareTransitiveLines(result.dependencyGraph, expected);
+    });
+  });
+
+  it('should return correct target file for uv project when relative path to uv lock file is passed', async () => {
+    const dirname = 'test/fixtures/uv-project';
+    const manifestFilePath = `${dirname}/uv.lock`;
+
+    const result = await inspect('.', manifestFilePath);
+    const expectedTargetFile = `${dirname}/pyproject.toml`;
+    expect(result.plugin.targetFile).toEqual(expectedTargetFile);
+  });
+
   describe('Pipfile projects', () => {
     const mockedExecuteSync = jest.spyOn(subProcess, 'executeSync');
     const mockedExecute = jest.spyOn(subProcess, 'execute');
